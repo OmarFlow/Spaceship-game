@@ -1,10 +1,14 @@
 import time
-from typing import List, Coroutine, Tuple
+import random
+import curses
+from typing import Coroutine
+import os
 from itertools import cycle
+import asyncio
 
-from spaceship.help_code import *
-from spaceship.utils import *
-from spaceship.constants import TIC_TIMEOUT
+from spaceship.help import draw_frame, read_controls
+from spaceship.utils import choice_height, choice_star, choice_width
+from spaceship.constants import TIC_TIMEOUT, SPACESHIP_HEIGHT, SPACESHIP_WIDTH, FRAMES_PATH
 
 
 async def blink(canvas, row: int, column: int, symbol='*') -> Coroutine:
@@ -29,33 +33,26 @@ async def blink(canvas, row: int, column: int, symbol='*') -> Coroutine:
             await asyncio.sleep(0)
 
 
-async def animate_spaceship(canvas, sr: int, sc: int, text: Tuple[str, str]):
+async def animate_spaceship(canvas, initial_row: int, initial_column: int, text: list[str]):
     """
     Анимация корабля
     """
-    canvas.nodelay(True)
-    max_row: int = curses.window.getmaxyx(canvas)[0]
-    max_column: int = curses.window.getmaxyx(canvas)[1]
+    max_window_height: int = curses.window.getmaxyx(canvas)[0]
+    max_window_width: int = curses.window.getmaxyx(canvas)[1]
     while True:
         for frame in cycle(text):
-            draw_frame(canvas, sr, sc, frame)
+            user_input_row, user_input_colum, _ = read_controls(canvas)
+            initial_row += user_input_row
+            initial_column += user_input_colum
 
-            r = sr
-            c = sc
+            if initial_row < 1 or initial_row > max_window_height - SPACESHIP_HEIGHT:
+                initial_row -= user_input_row
+            if initial_column < 1 or initial_column > max_window_width - SPACESHIP_WIDTH:
+                initial_column -= user_input_colum
 
-            row, col, _ = read_controls(canvas)
-            sr += row
-            sc += col
-
-            if sr < 1 or sr > max_row - 10:
-                sr = r
-            if sc < 1 or sc > max_column - 6:
-                sc = c
-
-            draw_frame(canvas, r, c, frame, negative=True)
-            draw_frame(canvas, sr, sc, frame)
+            draw_frame(canvas, initial_row, initial_column, frame)
             await asyncio.sleep(0)
-            draw_frame(canvas, sr, sc, frame, negative=True)
+            draw_frame(canvas, initial_row, initial_column, frame, negative=True)
 
 
 def draw(canvas) -> None:
@@ -63,25 +60,26 @@ def draw(canvas) -> None:
     Основной метод отрисовки
     """
     canvas.border()
+    canvas.nodelay(True)
 
-    with open("../frames/rocket_frame_1.txt", "r") as f:
-        frame1 = f.read()
+    frames = []
 
-    with open("../frames/rocket_frame_2.txt", "r") as f:
-        frame2 = f.read()
+    for frame_file in os.listdir(FRAMES_PATH):
+        with open(os.path.join(FRAMES_PATH, frame_file), 'r') as f:
+            frames.append(f.read())
 
-    coroutines: List[Coroutine] = [
-        animate_spaceship(canvas, 10, 30, (frame1, frame2))]
+    coroutines: list[Coroutine] = [
+        animate_spaceship(canvas, 10, 30, frames)]
     coroutines.extend([blink(canvas, choice_height(canvas), choice_width(
         canvas), choice_star()) for _ in range(30)])
 
     while True:
-        canvas.refresh()
         for coroutine in coroutines.copy():
             try:
                 coroutine.send(None)
             except StopIteration:
                 coroutines.remove(coroutine)
+        canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
 
