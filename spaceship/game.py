@@ -42,7 +42,7 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
     Анимация корабля
     """
     max_window_height, max_window_width = curses.window.getmaxyx(canvas)
-    frames: cycle[str] = cycle(frames)
+    frames: cycle[str] = cycle(frames)  # type:ignore
     while True:
         for frame in frames:
             user_row, user_colum, _ = read_controls(canvas)
