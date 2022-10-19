@@ -41,7 +41,7 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
     """
     Анимация корабля
     """
-    max_window_height, max_window_width = curses.window.getmaxyx(canvas)
+    window_height, window_width = curses.window.getmaxyx(canvas)
     frames: cycle[str] = cycle(frames)  # type:ignore
     while True:
         for frame in frames:
@@ -49,9 +49,9 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
             initial_row += user_row
             initial_column += user_colum
 
-            if initial_row < 1 or initial_row > max_window_height - SPACESHIP_HEIGHT:
+            if initial_row < 1 or initial_row > window_height - SPACESHIP_HEIGHT:
                 initial_row -= user_row
-            if initial_column < 1 or initial_column > max_window_width - SPACESHIP_WIDTH:
+            if initial_column < 1 or initial_column > window_width - SPACESHIP_WIDTH:
                 initial_column -= user_colum
 
             draw_frame(canvas, initial_row, initial_column, frame)
