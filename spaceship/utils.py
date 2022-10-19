@@ -14,10 +14,7 @@ def choice_width(canvas) -> int:
 
 def boost_spaceship_speed(row: int) -> int:
     if row > 0:
-        boosted_row = row + BOOST
+        return row + BOOST
     elif row < 0:
-        boosted_row = row + -BOOST
-    else:
-        boosted_row = row
-
-    return boosted_row
+        return row + -BOOST
+    return row
