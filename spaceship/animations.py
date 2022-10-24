@@ -71,27 +71,27 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
     window_height, window_width = curses.window.getmaxyx(canvas)
     frames: cycle[str] = cycle(frames)  # type:ignore
     for frame in frames:
-        user_row, user_colum, _ = read_controls(canvas)
+        for _ in range(2):
+            user_row, user_column, _ = read_controls(canvas)
 
-        boosted_row = boost_spaceship_speed(user_row)
-        boosted_column = boost_spaceship_speed(user_colum)
+            boosted_row = boost_spaceship_speed(user_row)
+            boosted_column = boost_spaceship_speed(user_column)
 
-        initial_row += boosted_row
-        initial_column += boosted_column
+            initial_row += boosted_row
+            initial_column += boosted_column
 
-        if initial_row < WINDOW_BORDER:
-            initial_row = WINDOW_BORDER
-        elif initial_row > window_height - SPACESHIP_HEIGHT:
-            initial_row = window_height - SPACESHIP_HEIGHT
+            if initial_row < WINDOW_BORDER:
+                initial_row = WINDOW_BORDER
+            elif initial_row > window_height - SPACESHIP_HEIGHT:
+                initial_row = window_height - SPACESHIP_HEIGHT
 
-        if initial_column < WINDOW_BORDER:
-            initial_column = WINDOW_BORDER
-        elif initial_column > window_width - SPACESHIP_WIDTH:
-            initial_column = window_width - SPACESHIP_WIDTH
+            if initial_column < WINDOW_BORDER:
+                initial_column = WINDOW_BORDER
+            elif initial_column > window_width - SPACESHIP_WIDTH:
+                initial_column = window_width - SPACESHIP_WIDTH
 
-        draw_frame(canvas, initial_row, initial_column, frame)
-        draw_frame(canvas, initial_row, initial_column, frame)
-        await asyncio.sleep(0)
-        draw_frame(canvas, initial_row, initial_column,
-                   frame, negative=True)
+            draw_frame(canvas, initial_row, initial_column, frame)
+            await asyncio.sleep(0)
+            draw_frame(canvas, initial_row, initial_column,
+                       frame, negative=True)
 

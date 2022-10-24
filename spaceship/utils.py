@@ -16,5 +16,5 @@ def boost_spaceship_speed(row: int) -> int:
     if row > 0:
         return row + BOOST
     elif row < 0:
-        return row + -BOOST
+        return row - BOOST
     return row
