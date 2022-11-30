@@ -1,5 +1,6 @@
 import random
 import curses
+from typing import Coroutine
 
 from spaceship.constants import BOOST
 
@@ -18,3 +19,17 @@ def boost_spaceship_speed(row: int) -> int:
     elif row < 0:
         return row - BOOST
     return row
+
+
+class Sleep:
+    def __init__(self, tics: int):
+        self.tics = tics
+
+    def __await__(self):
+        while self.tics > 0:
+            yield 1
+            self.tics -= 1
+
+
+async def sleep(tics=1) -> Coroutine:
+    await Sleep(tics)

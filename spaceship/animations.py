@@ -1,11 +1,29 @@
 import curses
 import asyncio
+import os
+from curses import initscr
+from random import choice, randint
 from typing import Coroutine
 from itertools import cycle
 
 from spaceship.curses_tools import draw_frame, read_controls
-from spaceship.constants import SPACESHIP_HEIGHT, SPACESHIP_WIDTH, WINDOW_BORDER
-from spaceship.utils import boost_spaceship_speed
+from spaceship.constants import SPACESHIP_HEIGHT, SPACESHIP_WIDTH, WINDOW_BORDER, FRAMES_PATH, STARS
+from spaceship.utils import boost_spaceship_speed, choice_height, choice_width, sleep
+
+canvas = initscr()
+canvas.keypad(1)
+rocket_frames = []
+trash_frames = []
+
+for frame_name in os.listdir(FRAMES_PATH):
+    frame_name_head = frame_name.split("_")[0]
+    match frame_name_head:
+        case "rocket":
+            with open(os.path.join(FRAMES_PATH, frame_name), 'r') as f:
+                rocket_frames.append(f.read())
+        case "trash":
+            with open(os.path.join(FRAMES_PATH, frame_name), 'r') as f:
+                trash_frames.append(f.read())
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -38,36 +56,56 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
+async def fly_garbage(canvas, column, garbage_frame, speed=0.4):
+    """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
+    rows_number, columns_number = canvas.getmaxyx()
+
+    column = max(column, 0)
+    column = min(column, columns_number - 1)
+
+    row = 0
+
+    while row < rows_number:
+        draw_frame(canvas, row, column, garbage_frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, garbage_frame, negative=True)
+        row += speed
+
+
+async def fill_orbit_with_garbage(canvas, frames):
+    _, columns_number = canvas.getmaxyx()
+    while True:
+        global coroutines
+        coroutines.append(fly_garbage(
+            canvas, randint(1, columns_number), choice(frames)))
+        await sleep(18)
+
+
 async def blink(canvas, row: int, column: int, offset_tics: int, symbol='*') -> Coroutine:
     """
     Анимация звезды
     """
-
-    for _ in range(offset_tics):
-        await asyncio.sleep(0)
+    await sleep(offset_tics)
 
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        for _ in range(20):
-            await asyncio.sleep(0)
+        await sleep(20)
 
         canvas.addstr(row, column, symbol)
-        for _ in range(3):
-            await asyncio.sleep(0)
+        await sleep(3)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        for _ in range(5):
-            await asyncio.sleep(0)
+        await sleep(5)
 
         canvas.addstr(row, column, symbol)
-        for _ in range(3):
-            await asyncio.sleep(0)
+        await sleep(3)
 
 
 async def animate_spaceship(canvas, initial_row: int, initial_column: int, frames: list[str]):
     """
     Анимация корабля
     """
+
     window_height, window_width = curses.window.getmaxyx(canvas)
     frames: cycle[str] = cycle(frames)  # type:ignore
     for frame in frames:
@@ -95,3 +133,19 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
             draw_frame(canvas, initial_row, initial_column,
                        frame, negative=True)
 
+
+coroutines: list[Coroutine] = [
+    fire(canvas, 10, 30),
+    animate_spaceship(canvas, 10, 30, rocket_frames),
+    fill_orbit_with_garbage(canvas, trash_frames)
+]
+coroutines.extend(
+    [blink(canvas,
+           choice_height(canvas),
+           choice_width(canvas),
+           randint(1, 15),
+           choice(STARS)
+           )
+     for _ in range(40)
+     ]
+)
