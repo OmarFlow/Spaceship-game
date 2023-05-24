@@ -13,11 +13,11 @@ def choice_width(canvas) -> int:
     return random.randint(1, curses.window.getmaxyx(canvas)[1] - 1)
 
 
-def boost_spaceship_speed(row: int) -> int:
+def boost_spaceship_speed(row: int, rate: float) -> int:
     if row > 0:
-        return row + BOOST
+        return row + (BOOST * rate)
     elif row < 0:
-        return row - BOOST
+        return row - (BOOST * rate)
     return row
 
 

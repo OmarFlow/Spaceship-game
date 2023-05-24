@@ -7,7 +7,7 @@ from typing import Coroutine
 from itertools import cycle
 
 from spaceship.curses_tools import draw_frame, read_controls
-from spaceship.constants import SPACESHIP_HEIGHT, SPACESHIP_WIDTH, WINDOW_BORDER, FRAMES_PATH, STARS
+from spaceship.constants import SPACESHIP_HEIGHT, SPACESHIP_WIDTH, WINDOW_BORDER, FRAMES_PATH, STARS, BOOST, BOOST_RATE
 from spaceship.utils import boost_spaceship_speed, choice_height, choice_width, sleep
 
 canvas = initscr()
@@ -81,6 +81,12 @@ async def fill_orbit_with_garbage(canvas, frames):
         await sleep(18)
 
 
+async def burst_fire(canvas, row, column):
+    for _ in range(3):
+        coroutines.append(fire(canvas, row, column)),
+        await sleep(3)
+
+
 async def blink(canvas, row: int, column: int, offset_tics: int, symbol='*') -> Coroutine:
     """
     Анимация звезды
@@ -108,12 +114,21 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
 
     window_height, window_width = curses.window.getmaxyx(canvas)
     frames: cycle[str] = cycle(frames)  # type:ignore
+    boost_row_rate = BOOST_RATE
+    boost_column_rate = BOOST_RATE
     for frame in frames:
         for _ in range(2):
-            user_row, user_column, _ = read_controls(canvas)
+            user_row, user_column, is_fire = read_controls(canvas)
 
-            boosted_row = boost_spaceship_speed(user_row)
-            boosted_column = boost_spaceship_speed(user_column)
+            boosted_row = boost_spaceship_speed(user_row, boost_row_rate)
+            boosted_column = boost_spaceship_speed(user_column, boost_column_rate)
+
+            if not user_row:
+                boost_row_rate = BOOST_RATE
+                boost_column_rate = BOOST_RATE
+            elif boost_row_rate < BOOST:
+                boost_row_rate += BOOST_RATE
+                boost_column_rate += BOOST_RATE
 
             initial_row += boosted_row
             initial_column += boosted_column
@@ -127,6 +142,9 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
                 initial_column = WINDOW_BORDER
             elif initial_column > window_width - SPACESHIP_WIDTH:
                 initial_column = window_width - SPACESHIP_WIDTH
+
+            if is_fire:
+                coroutines.append(burst_fire(canvas, initial_row, initial_column))
 
             draw_frame(canvas, initial_row, initial_column, frame)
             await asyncio.sleep(0)
