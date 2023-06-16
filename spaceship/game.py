@@ -9,10 +9,7 @@ def draw(canvas) -> None:
     """
     Основной метод отрисовки
     """
-    canvas.border()
     canvas.nodelay(True)
-
-    global coroutines
 
     while True:
         for coroutine in coroutines.copy():

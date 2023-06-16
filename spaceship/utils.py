@@ -26,7 +26,7 @@ class Sleep:
         self.tics = tics
 
     def __await__(self):
-        while self.tics > 0:
+        while self.tics >= 0:
             yield 1
             self.tics -= 1
 
