@@ -147,6 +147,7 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
     boost_row_rate = BOOST_RATE
     boost_column_rate = BOOST_RATE
     for frame in frames:
+        print(window_height)
         for _ in range(2):
             user_row, user_column, is_fire = read_controls(canvas)
 
@@ -166,16 +167,8 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
 
             initial_row += boosted_row
             initial_column += boosted_column
-
-            if initial_row < WINDOW_BORDER:
-                initial_row = WINDOW_BORDER
-            elif initial_row > window_height - SPACESHIP_HEIGHT:
-                initial_row = window_height - SPACESHIP_HEIGHT
-
-            if initial_column < WINDOW_BORDER:
-                initial_column = WINDOW_BORDER
-            elif initial_column > window_width - SPACESHIP_WIDTH:
-                initial_column = window_width - SPACESHIP_WIDTH
+            initial_row = sorted([window_height - SPACESHIP_HEIGHT, WINDOW_BORDER, initial_row])[1]
+            initial_column = sorted([window_width - SPACESHIP_WIDTH, WINDOW_BORDER, initial_column])[1]
 
             if is_fire and year > UNLOCK_GUN_YEAR:
                 coroutines.append(burst_fire(canvas, initial_row, initial_column))
