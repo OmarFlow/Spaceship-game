@@ -147,7 +147,6 @@ async def animate_spaceship(canvas, initial_row: int, initial_column: int, frame
     boost_row_rate = BOOST_RATE
     boost_column_rate = BOOST_RATE
     for frame in frames:
-        print(window_height)
         for _ in range(2):
             user_row, user_column, is_fire = read_controls(canvas)
 
